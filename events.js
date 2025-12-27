@@ -1,0 +1,42 @@
+import { sharedState, setMenuVisible } from './state.js';
+import { updateMenuVisibilityUI } from './ui.js';
+import { triggerQuickReply, triggerJsRunnerScript, triggerLwbTask } from './api.js';
+import * as Constants from './constants.js';
+
+export function handleRocketButtonClick() {
+    setMenuVisible(!sharedState.menuVisible);
+    updateMenuVisibilityUI();
+}
+
+export function handleOutsideClick(event) {
+    const { menu, rocketButton } = sharedState.domElements;
+    // 点击菜单外部关闭
+    if (sharedState.menuVisible && menu && !menu.contains(event.target) && !rocketButton.contains(event.target)) {
+        setMenuVisible(false);
+        updateMenuVisibilityUI();
+    }
+}
+
+export function handleQuickReplyClick(event) {
+    const button = event.currentTarget;
+    const { label, isStandard, setName, source, isApiBased, buttonId, scriptId, taskId } = button.dataset;
+
+    // 关闭菜单
+    setMenuVisible(false);
+    updateMenuVisibilityUI();
+
+    if (source === 'JSSlashRunner') {
+        triggerJsRunnerScript({ isApiBased: isApiBased === 'true', buttonId, scriptId });
+    } else if (source === 'LittleWhiteBox') {
+        triggerLwbTask(taskId);
+    } else {
+        triggerQuickReply(setName, label);
+    }
+}
+
+export function setupEventListeners() {
+    const btn = sharedState.domElements.rocketButton;
+    if (btn) btn.addEventListener('click', handleRocketButtonClick);
+    document.addEventListener('click', handleOutsideClick, true);
+    // 设置面板监听在 settings.js 中处理
+}
